@@ -12,15 +12,18 @@ router.post("/generate", authMiddleware, async (req, res) => {
       return res.status(400).json({ message: "Goal is required" });
     }
 
-    // Create OpenAI client INSIDE the route (AFTER dotenv is loaded)
     const client = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
+      baseURL: "https://openrouter.ai/api/v1",
     });
 
     const response = await client.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "openrouter/free",
       messages: [
-        { role: "user", content: `Generate a roadmap for: ${goal}` },
+        {
+          role: "user",
+          content: `Generate a roadmap for: ${goal}`,
+        },
       ],
     });
 
