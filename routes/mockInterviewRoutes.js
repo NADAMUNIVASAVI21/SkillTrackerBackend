@@ -2,59 +2,83 @@ import express from "express";
 import { OpenAI } from "openai";
 import authMiddleware from "../middleware/authMiddleware.js";
 
-
 const router = express.Router();
+
+const createClient = () => {
+  return new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+    baseURL: "https://openrouter.ai/api/v1",
+  });
+};
 
 // Generate questions
 router.post("/generate", authMiddleware, async (req, res) => {
   try {
-    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const client = createClient();
 
     const { role } = req.body;
 
     const response = await client.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "openrouter/free",
       messages: [
-        { role: "system", content: "You are an expert interviewer." },
-        { role: "user", content: `Generate 5 interview questions for: ${role}` }
-      ]
+        {
+          role: "system",
+          content: "You are an expert interviewer.",
+        },
+        {
+          role: "user",
+          content: `Generate 5 interview questions for: ${role}`,
+        },
+      ],
     });
 
     res.json({
-      questions: response.choices[0].message.content.split("\n")
+      questions: response.choices[0].message.content.split("\n"),
     });
-
   } catch (error) {
     console.error("MOCK GENERATE ERROR:", error);
-    res.status(500).json({ error: "Failed to generate questions" });
+    res.status(500).json({
+      error: "Failed to generate questions",
+    });
   }
 });
 
 // Evaluate answer
 router.post("/evaluate", authMiddleware, async (req, res) => {
   try {
-    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const client = createClient();
 
     const { question, answer } = req.body;
 
     const response = await client.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "openrouter/free",
       messages: [
-        { role: "system", content: "You are a senior HR evaluator." },
+        {
+          role: "system",
+          content: "You are a senior HR evaluator.",
+        },
         {
           role: "user",
-          content: `Question: ${question}\nAnswer: ${answer}\nEvaluate with score, strengths, weaknesses, improvements.`
-        }
-      ]
+          content: `Question: ${question}
+Answer: ${answer}
+
+Evaluate with:
+- Score
+- Strengths
+- Weaknesses
+- Improvements`,
+        },
+      ],
     });
 
     res.json({
-      evaluation: response.choices[0].message.content
+      evaluation: response.choices[0].message.content,
     });
-
   } catch (error) {
     console.error("MOCK EVALUATE ERROR:", error);
-    res.status(500).json({ error: "Failed to evaluate answer" });
+    res.status(500).json({
+      error: "Failed to evaluate answer",
+    });
   }
 });
 
